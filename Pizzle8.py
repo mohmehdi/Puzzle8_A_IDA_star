@@ -71,7 +71,8 @@ class Puzzle_8_Solver():
 			return h_cost		
 		
 	def A_star(self,choice:bool):
-		h=self.h_misplace if choice else self.h_manhatan	
+		""" True for misplace method and False for manhattan distance as heuristic"""  
+		h=self.h_misplace if choice else self.h_manhattan	
 
 		q:PriorityQueue=PriorityQueue()
 		start_state=PuzzleState(self.start)
@@ -81,7 +82,7 @@ class Puzzle_8_Solver():
 		print(f"Start State: h = {curr_node.h}")
 		for item in curr_node.state.matrix:
 			print(item)
-			
+
 		while(True):
 			print("picking new node")
 			curr_node=q.get()
