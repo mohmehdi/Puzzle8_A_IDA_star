@@ -46,9 +46,9 @@ class SearchNode():
 		def __lt__(self,other):
 			return self.f<other.f
 		def __repr__(self):
-			res = f" h = {self.h}"
+			res = f"\t\t h = {self.h} , g = {self.g} \n"
 			for item in self.state.matrix:
-				res+=f"\t{item}\n"
+				res+=f"\t\t{item}\n"
 			return res
 
 class Puzzle_8_Solver():
@@ -62,7 +62,7 @@ class Puzzle_8_Solver():
 		h_cost=0
 		for row in range(len(node.matrix)):
 			for col in range(len(node.matrix[row])):
-				if node.matrix[row][col] is not self.goal[row][col]:
+				if node.matrix[row][col]!= blank and node.matrix[row][col] is not self.goal[row][col]:
 					h_cost+=1
 		return h_cost
 
@@ -70,12 +70,13 @@ class Puzzle_8_Solver():
 			h_cost=0
 			for row in range(len(node.matrix)):
 				for col in range(len(node.matrix[row])): 
-					x,y = self.goal_dic[node.matrix[row][col]]
-					h_cost+= abs(row - x) + abs(col - y)
+					if node.matrix[row][col]!= blank:
+						x,y = self.goal_dic[node.matrix[row][col]]
+						h_cost+= abs(row - x) + abs(col - y)
 
 			return h_cost		
 		
-	def A_star(self,choice:bool,IDA:bool):
+	def A_star(self,choice:bool):
 		""" True for misplace method and False for manhattan distance as heuristic"""  
 		h=self.h_misplace if choice else self.h_manhattan	
 
@@ -104,21 +105,25 @@ class Puzzle_8_Solver():
 		""" True for misplace method and False for manhattan distance as heuristic"""  
 		h=self.h_misplace if choice else self.h_manhattan
 		start_state=PuzzleState(self.start)
-		curr_node : SearchNode = SearchNode(0, h(start_state),start_state)
-		cutoff = curr_node.f
-		max_cutoff = 100
+		start_node : SearchNode = SearchNode(0, h(start_state),start_state)
+		cutoff = start_node.f
+		max_cutoff = 10
 		stack = []
 		
 		dir_option = []
 		for dir in Direction:
 			dir_option.append(dir)
 
+		print(f"Start State:\n {start_node}")
+		print(f"------------cut-off ({cutoff})-------------")
+
 		while(cutoff<max_cutoff):
 			curr_dir=0	
-			stack.append((curr_node,curr_dir))
+			stack.append((start_node,curr_dir))
 			while(True):
 				if not stack:
 					cutoff+=1
+					print(f"------------cut-off-increesed to {cutoff}-------------")
 					break
 				print("picking new node")
 				curr_node,curr_dir=stack.pop()
@@ -127,14 +132,16 @@ class Puzzle_8_Solver():
 					return	
 				for i in range(curr_dir, len(dir_option)):
 					new_state = curr_node.state.move_blank(dir_option[i])
-					if new_state is not None and h(new_state)+curr_node.g+1<=cutoff:
-						n=SearchNode(curr_node.g+1, h(new_state),new_state)
-						stack.append((curr_node,i+1))
-						curr_node=n
-						curr_dir=0
-						print(dir.name)
-						print(n)
-						break
+					if new_state is not None:
+						if h(new_state)+curr_node.g+1<=cutoff:
+							n=SearchNode(curr_node.g+1, h(new_state),new_state)
+							stack.append((curr_node,i+1))
+							stack.append((n,0))
+							print(dir_option[i].name)
+							print(n)
+							break
+						else:
+							print(f"{dir_option[i].name} X")
 
 
 blank = " "
@@ -142,12 +149,20 @@ goal = [["1","2","3"],
 		["4","5",blank],
 		["7","8","6"]]
 
+# start= [["1","2","3"],
+# 		["4","8","5"],
+# 		["7",blank,"6"]]
+# start= [["1","2","3"],
+# 		["4",blank,"5"],
+# 		["7","8","6"]]
+
 start= [["1","2","3"],
-		["4","8","5"],
-		["7",blank,"6"]]
+ 		["4","5","6"],
+ 		[blank,"7","8"]]
+
 
 solver = Puzzle_8_Solver(start,goal)
-solver.IDA_star(choice=True)
+solver.A_star(choice=False)
 
 
 
