@@ -45,6 +45,11 @@ class SearchNode():
 			self.state:PuzzleState=_state
 		def __lt__(self,other):
 			return self.f<other.f
+		def __repr__(self):
+			res = f" h = {self.h}"
+			for item in self.state.matrix:
+				res+=f"\t{item}\n"
+			return res
 
 class Puzzle_8_Solver():
 
@@ -61,7 +66,7 @@ class Puzzle_8_Solver():
 					h_cost+=1
 		return h_cost
 
-	def h_manhatan(self, node:PuzzleState) -> int:
+	def h_manhattan(self, node:PuzzleState) -> int:
 			h_cost=0
 			for row in range(len(node.matrix)):
 				for col in range(len(node.matrix[row])): 
@@ -79,25 +84,22 @@ class Puzzle_8_Solver():
 		curr_node : SearchNode = SearchNode(0, h(start_state),start_state)
 		q.put(curr_node)
 
-		print(f"Start State: h = {curr_node.h}")
-		for item in curr_node.state.matrix:
-			print(item)
+		print(f"Start State:\n {curr_node}")
 
 		while(True):
 			print("picking new node")
 			curr_node=q.get()
 			if curr_node.h==0:
-				print(f"Reached the goal with: {curr_node.g} steps")
+				print(f"Reached the goal with: {curr_node.g} steps\n")
 				return
-				
+
 			for dir in Direction:
 				new_state = curr_node.state.move_blank(dir)
 				if new_state is not None:
 					n=SearchNode(curr_node.g+1, h(new_state),new_state)
 					q.put(n)
-					print(f"\n {dir.name} : h = {n.h}")
-					for item in n.state.matrix:
-						print(item)
+					print(dir.name)
+					print(n)
 
 blank = " "
 goal = [["1","2","3"],
@@ -105,9 +107,11 @@ goal = [["1","2","3"],
 		["7","8","6"]]
 
 start= [["1","2","3"],
-		["4",blank,"5"],
-		["7","8","6"]]
+		["4","8","5"],
+		["7",blank,"6"]]
 
 solver = Puzzle_8_Solver(start,goal)
-solver.A_star(False)
+solver.A_star(choice=True)
+
+
 
