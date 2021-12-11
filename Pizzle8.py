@@ -75,7 +75,7 @@ class Puzzle_8_Solver():
 
 			return h_cost		
 		
-	def A_star(self,choice:bool):
+	def A_star(self,choice:bool,IDA:bool):
 		""" True for misplace method and False for manhattan distance as heuristic"""  
 		h=self.h_misplace if choice else self.h_manhattan	
 
@@ -100,6 +100,42 @@ class Puzzle_8_Solver():
 					q.put(n)
 					print(dir.name)
 					print(n)
+	def IDA_star(self,choice:bool):
+		""" True for misplace method and False for manhattan distance as heuristic"""  
+		h=self.h_misplace if choice else self.h_manhattan
+		start_state=PuzzleState(self.start)
+		curr_node : SearchNode = SearchNode(0, h(start_state),start_state)
+		cutoff = curr_node.f
+		max_cutoff = 100
+		stack = []
+		
+		dir_option = []
+		for dir in Direction:
+			dir_option.append(dir)
+
+		while(cutoff<max_cutoff):
+			curr_dir=0	
+			stack.append((curr_node,curr_dir))
+			while(True):
+				if not stack:
+					cutoff+=1
+					break
+				print("picking new node")
+				curr_node,curr_dir=stack.pop()
+				if curr_node.h==0:
+					print(f"Reached the goal with: {curr_node.g} steps\n")
+					return	
+				for i in range(curr_dir, len(dir_option)):
+					new_state = curr_node.state.move_blank(dir_option[i])
+					if new_state is not None and h(new_state)+curr_node.g+1<=cutoff:
+						n=SearchNode(curr_node.g+1, h(new_state),new_state)
+						stack.append((curr_node,i+1))
+						curr_node=n
+						curr_dir=0
+						print(dir.name)
+						print(n)
+						break
+
 
 blank = " "
 goal = [["1","2","3"],
@@ -111,7 +147,7 @@ start= [["1","2","3"],
 		["7",blank,"6"]]
 
 solver = Puzzle_8_Solver(start,goal)
-solver.A_star(choice=True)
+solver.IDA_star(choice=True)
 
 
 
