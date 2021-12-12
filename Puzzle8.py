@@ -18,7 +18,7 @@ class PuzzleState:
 	def move_blank(self,dir:Direction) :
 		eX,eY = self.get_empty_cell_pos()
 		x,y = eX+dir.value[0] , eY+dir.value[1]
-		if x<-1 or y<-1 or x>=len(self.matrix) or y>=len(self.matrix[0]):
+		if x<0 or y<0 or x>=len(self.matrix) or y>=len(self.matrix[0]):
 			return None
 		#Swap tiles
 		newState = deepcopy(self.matrix)
@@ -109,7 +109,6 @@ class Puzzle_8_Solver():
 		cutoff = start_node.f
 		max_cutoff = 10
 		stack = []
-		
 		dir_option = []
 		for dir in Direction:
 			dir_option.append(dir)
@@ -143,7 +142,6 @@ class Puzzle_8_Solver():
 						else:
 							print(f"{dir_option[i].name} X")
 
-
 blank = " "
 goal = [["1","2","3"],
 		["4","5",blank],
@@ -152,6 +150,7 @@ goal = [["1","2","3"],
 # start= [["1","2","3"],
 # 		["4","8","5"],
 # 		["7",blank,"6"]]
+
 # start= [["1","2","3"],
 # 		["4",blank,"5"],
 # 		["7","8","6"]]
@@ -160,9 +159,8 @@ start= [["1","2","3"],
  		["4","5","6"],
  		[blank,"7","8"]]
 
-
 solver = Puzzle_8_Solver(start,goal)
-solver.A_star(choice=False)
+solver.IDA_star(choice=False)
 
 
 
