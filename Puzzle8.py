@@ -1,7 +1,7 @@
 from queue import PriorityQueue 
 from enum import Enum
 from copy import deepcopy
-
+import time
 class Direction(Enum):
 	up = [-1,0]
 	down = [1,0]
@@ -50,7 +50,8 @@ class SearchNode():
 			for item in self.state.matrix:
 				res+=f"\t\t{item}\n"
 			return res
-
+		def __eq__(self,other):
+				return self.f == other.f and self.state.matrix == other.state.matrix
 class Puzzle_8_Solver():
 
 	def __init__(self,_start,_goal):	 
@@ -77,6 +78,7 @@ class Puzzle_8_Solver():
 			return h_cost		
 		
 	def A_star(self,choice:bool):
+		duplicate_check_list = []
 		""" True for misplace method and False for manhattan distance as heuristic"""  
 		h=self.h_misplace if choice else self.h_manhattan	
 
@@ -86,19 +88,25 @@ class Puzzle_8_Solver():
 		q.put(curr_node)
 
 		print(f"Start State:\n {curr_node}")
-
+		node_count=0
 		while(True):
 			print("picking new node")
 			curr_node=q.get()
+			node_count+=1
 			if curr_node.h==0:
 				print(f"Reached the goal with: {curr_node.g} steps\n")
+				print(f"node count: {node_count}")
 				return
 
 			for dir in Direction:
 				new_state = curr_node.state.move_blank(dir)
 				if new_state is not None:
 					n=SearchNode(curr_node.g+1, h(new_state),new_state)
+					if duplicate_check_list.__contains__(n):
+						continue
+			
 					q.put(n)
+					duplicate_check_list.append(n)
 					print(dir.name)
 					print(n)
 	def IDA_star(self,choice:bool):
@@ -107,18 +115,19 @@ class Puzzle_8_Solver():
 		start_state=PuzzleState(self.start)
 		start_node : SearchNode = SearchNode(0, h(start_state),start_state)
 		cutoff = start_node.f
-		max_cutoff = 10
+		max_cutoff = 1000
 		stack = []
 		dir_option = []
 		for dir in Direction:
 			dir_option.append(dir)
-
+		node_count=0
 		print(f"Start State:\n {start_node}")
 		print(f"------------cut-off ({cutoff})-------------")
 
 		while(cutoff<max_cutoff):
 			curr_dir=0	
 			stack.append((start_node,curr_dir))
+			duplicate_check_list = []
 			while(True):
 				if not stack:
 					cutoff+=1
@@ -126,14 +135,19 @@ class Puzzle_8_Solver():
 					break
 				print("picking new node")
 				curr_node,curr_dir=stack.pop()
+				node_count+=1
 				if curr_node.h==0:
 					print(f"Reached the goal with: {curr_node.g} steps\n")
+					print(f"Nodes made {node_count}")
 					return	
 				for i in range(curr_dir, len(dir_option)):
 					new_state = curr_node.state.move_blank(dir_option[i])
 					if new_state is not None:
 						if h(new_state)+curr_node.g+1<=cutoff:
 							n=SearchNode(curr_node.g+1, h(new_state),new_state)
+							if duplicate_check_list.__contains__(n):
+								continue
+							duplicate_check_list.append(n)
 							stack.append((curr_node,i+1))
 							stack.append((n,0))
 							print(dir_option[i].name)
@@ -143,9 +157,22 @@ class Puzzle_8_Solver():
 							print(f"{dir_option[i].name} X")
 
 blank = " "
-goal = [["1","2","3"],
-		["4","5",blank],
-		["7","8","6"]]
+
+start = [
+    ["8", "6", "7"],
+    ["2", "5", "4"],
+    ["3", blank, "1"]
+]
+
+goal = [
+    ["6", "4", "7"],
+    ["8", "5", blank],
+    ["3", "2", "1"]
+]
+
+# goal = [["1","2","3"],
+# 		["4","5",blank],
+# 		["7","8","6"]]
 
 # start= [["1","2","3"],
 # 		["4","8","5"],
@@ -155,12 +182,14 @@ goal = [["1","2","3"],
 # 		["4",blank,"5"],
 # 		["7","8","6"]]
 
-start= [["1","2","3"],
- 		["4","5","6"],
- 		[blank,"7","8"]]
+# start= [["1","2","3"],
+#  		["4","5","6"],
+#  		[blank,"7","8"]]
+startTime= time.time()
 
 solver = Puzzle_8_Solver(start,goal)
 solver.IDA_star(choice=False)
-
+endTime= time.time()
+print(endTime-startTime)
 
 
