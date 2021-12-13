@@ -1,6 +1,7 @@
 from queue import PriorityQueue 
 from enum import Enum
 from copy import deepcopy
+import random
 import time
 class Direction(Enum):
 	up = [-1,0]
@@ -8,12 +9,19 @@ class Direction(Enum):
 	right = [0,1]
 	left = [0,-1]
 
+	def get_oppisite_direction(self):
+		id=list(Direction).index(self)
+		return list(Direction)[(id+1 if id%2==0 else id-1)]
+
 class PuzzleState:
 
 	def __init__(self, _matrix, _ex:int = -1, _ey:int = -1):
 		self.matrix = _matrix
 		self.ecellX:int	= _ex
 		self.ecellY:int = _ey
+	
+	def __eq__(self,other):
+		return (self is not None) and (other is not None) and self.matrix == other.matrix
 	
 	def move_blank(self,dir:Direction) :
 		eX,eY = self.get_empty_cell_pos()
@@ -37,12 +45,43 @@ class PuzzleState:
 
 		return (self.ecellX,self.ecellY)
 
+	def randomize_puzzle(self,goal,steps:int)->"PuzzleState":
+		print("Generating Puzzle:")
+		duplicate_checklist=[]
+		puzzle:PuzzleState = PuzzleState(goal)
+		duplicate_checklist.append(puzzle)
+		i=0
+		possible_direction = list(Direction)
+
+		dir:Direction = random.choice(possible_direction)
+		while i < steps:
+
+			dir = random.choice(possible_direction) 
+			
+			mat:PuzzleState = puzzle.move_blank(dir)
+			print(f"\t choosed {dir.name}")
+			if mat is None:
+				possible_direction.remove(dir)
+			else:
+				if duplicate_checklist.__contains__(mat):
+					continue
+				puzzle = mat
+				duplicate_checklist.append(puzzle)
+				possible_direction = list(Direction)
+				possible_direction.remove(dir.get_oppisite_direction())
+				i+=1
+				print("\t_________________")
+		return puzzle
+				
+				
+			
 class SearchNode():
 		def __init__(self,_g,_h,_state:PuzzleState):
 			self.g=_g
 			self.h=_h
 			self.f=_g+_h
 			self.state:PuzzleState=_state
+			self.parent:SearchNode =None
 		def __lt__(self,other):
 			return self.f<other.f
 		def __repr__(self):
@@ -51,7 +90,8 @@ class SearchNode():
 				res+=f"\t\t{item}\n"
 			return res
 		def __eq__(self,other):
-				return self.f == other.f and self.state.matrix == other.state.matrix
+				return self.state == other.state and self.f > other.f
+					
 class Puzzle_8_Solver():
 
 	def __init__(self,_start,_goal):	 
@@ -90,25 +130,31 @@ class Puzzle_8_Solver():
 		print(f"Start State:\n {curr_node}")
 		node_count=0
 		while(True):
-			print("picking new node")
+		#	print(f"picking {node_count} node")
 			curr_node=q.get()
 			node_count+=1
 			if curr_node.h==0:
 				print(f"Reached the goal with: {curr_node.g} steps\n")
 				print(f"node count: {node_count}")
+				temp_stack=[]
+				while curr_node.parent is not None:
+					temp_stack.append(curr_node)
+					curr_node=curr_node.parent
+				while temp_stack:
+					print(temp_stack.pop())
 				return
 
 			for dir in Direction:
 				new_state = curr_node.state.move_blank(dir)
 				if new_state is not None:
-					n=SearchNode(curr_node.g+1, h(new_state),new_state)
-					if duplicate_check_list.__contains__(n):
+					child_node=SearchNode(curr_node.g+1, h(new_state),new_state)
+					if duplicate_check_list.__contains__(child_node):
 						continue
-			
-					q.put(n)
-					duplicate_check_list.append(n)
-					print(dir.name)
-					print(n)
+					child_node.parent=curr_node	
+					q.put(child_node)
+					duplicate_check_list.append(child_node)
+					#print(dir.name)
+					#print(child_node)
 	def IDA_star(self,choice:bool):
 		""" True for misplace method and False for manhattan distance as heuristic"""  
 		h=self.h_misplace if choice else self.h_manhattan
@@ -158,25 +204,28 @@ class Puzzle_8_Solver():
 
 blank = " "
 
-start = [
-    ["8", "6", "7"],
-    ["2", "5", "4"],
-    ["3", blank, "1"]
-]
+# start = [
+#     ["8", "6", "7"],
+#     ["2", "5", "4"],
+#     ["3", blank, "1"]
+# ]
 
-goal = [
-    ["6", "4", "7"],
-    ["8", "5", blank],
-    ["3", "2", "1"]
-]
+# goal = [
+#     ["6", "4", "7"],
+#     ["8", "5", blank],
+#     ["3", "2", "1"]
+# ]
 
-# goal = [["1","2","3"],
-# 		["4","5",blank],
-# 		["7","8","6"]]
+goal = [["1","2","3","4"],
+		["5","6","7","8"],
+		["9","10","11","12"],
+		["13","14","15",blank]]
 
-# start= [["1","2","3"],
-# 		["4","8","5"],
-# 		["7",blank,"6"]]
+start = PuzzleState(goal).randomize_puzzle(goal,25).matrix
+# start = [["1","2","3","4"],
+# 		["5","6","7","8"],
+# 		["9",blank,"10","11"],
+# 		["13","14","15","12"]]
 
 # start= [["1","2","3"],
 # 		["4",blank,"5"],
@@ -188,7 +237,8 @@ goal = [
 startTime= time.time()
 
 solver = Puzzle_8_Solver(start,goal)
-solver.IDA_star(choice=False)
+print("solving...")
+solver.A_star(choice=False)
 endTime= time.time()
 print(endTime-startTime)
 
